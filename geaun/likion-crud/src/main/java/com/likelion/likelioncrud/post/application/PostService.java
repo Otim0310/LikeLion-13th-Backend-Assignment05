@@ -11,6 +11,7 @@ import com.likelion.likelioncrud.post.api.dto.response.PostListResponseDto;
 import com.likelion.likelioncrud.post.domain.Post;
 import com.likelion.likelioncrud.post.domain.repository.PostRepository;
 import com.likelion.likelioncrud.posttag.domain.PostTag;
+import com.likelion.likelioncrud.posttag.domain.repository.PostTagRepository;
 import com.likelion.likelioncrud.tag.domain.Tag;
 import com.likelion.likelioncrud.tag.domain.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +24,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PostService {
+
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-
-    // 게시물 저장
+    private final PostTagRepository postTagRepository;
+    
     @Transactional
     public void postSave(PostSaveRequestDto postSaveRequestDto) {
-        Member member = getMember(postSaveRequestDto);
+        Member member = memberRepository.findById(postSaveRequestDto.memberId())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.MEMBER_NOT_FOUND_EXCEPTION,
+                        ErrorCode.MEMBER_NOT_FOUND_EXCEPTION.getMessage() + postSaveRequestDto.memberId()
+                ));
 
         Post post = Post.builder()
                 .title(postSaveRequestDto.title())
@@ -38,20 +44,33 @@ public class PostService {
                 .member(member)
                 .build();
 
-
-        for (String tagName : postSaveRequestDto.tags()) {
-            Tag tag = tagRepository.findByName(tagName)
-                    .orElseGet(() -> tagRepository.save(new Tag(tagName)));
-
-            post.getPostTags().add(new PostTag(post, tag));
-        }
-
         postRepository.save(post);
+
+        List<Long> tagIds = postSaveRequestDto.tagIds();
+        if (tagIds != null && !tagIds.isEmpty()) {
+            tagIds.forEach(tagId -> {
+                Tag tag = tagRepository.findById(tagId)
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.TAG_NOT_FOUND_EXCEPTION,
+                                ErrorCode.TAG_NOT_FOUND_EXCEPTION.getMessage() + tagId
+                        ));
+
+                PostTag postTag = PostTag.builder()
+                        .post(post)
+                        .tag(tag)
+                        .build();
+
+                postTagRepository.save(postTag);
+            });
+        }
     }
 
-    // 특정 작성자가 작성한 게시글 목록을 조회
     public PostListResponseDto postFindMember(Long memberId) {
-        Member member = memberRepository.findById(memberId).orElseThrow(IllegalArgumentException::new);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.MEMBER_NOT_FOUND_EXCEPTION,
+                        ErrorCode.MEMBER_NOT_FOUND_EXCEPTION.getMessage() + memberId
+                ));
 
         List<Post> posts = postRepository.findByMember(member);
         List<PostInfoResponseDto> postInfoResponseDtos = posts.stream()
@@ -61,43 +80,23 @@ public class PostService {
         return PostListResponseDto.from(postInfoResponseDtos);
     }
 
-    public PostInfoResponseDto findPost(Long postId) {
-        Post post = getPost(postId);
-        return PostInfoResponseDto.from(post);
-    }
-
-    // 게시물 수정
     @Transactional
     public void postUpdate(Long postId, PostUpdateRequestDto postUpdateRequestDto) {
-        Post post = getPost(postId);
-
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.POST_NOT_FOUND_EXCEPTION,
+                        ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage() + postId
+                ));
         post.update(postUpdateRequestDto);
-
-        // 기존 태그 제거
-        post.getPostTags().clear();
-
-        // 새 태그 관계 추가
-        for (String tagName : postUpdateRequestDto.tags()) {
-            Tag tag = tagRepository.findByName(tagName)
-                    .orElseGet(() -> tagRepository.save(new Tag(tagName)));
-            post.getPostTags().add(new PostTag(post, tag));
-        }
     }
 
-    // 게시물 삭제
     @Transactional
     public void postDelete(Long postId) {
-        Post post = getPost(postId);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.POST_NOT_FOUND_EXCEPTION,
+                        ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage() + postId
+                ));
         postRepository.delete(post);
-    }
-
-    private Member getMember(PostSaveRequestDto postSaveRequestDto) {
-        return memberRepository.findById(postSaveRequestDto.memberId()).orElseThrow(() -> new BusinessException(
-                ErrorCode.MEMBER_NOT_FOUND_EXCEPTION, ErrorCode.MEMBER_NOT_FOUND_EXCEPTION.getMessage() + postSaveRequestDto.memberId()));
-    }
-
-    private Post getPost(Long postId) {
-        return postRepository.findById(postId).orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION,
-                ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage() + postId));
     }
 }
