@@ -22,7 +22,7 @@ public class MemberController {
 
     // 사용자 저장
     @PostMapping("/save")
-    public ApiResTemplate<String> memberSave(@RequestBody MemberSaveRequestDto memberSaveRequestDto) {
+    public ApiResTemplate<String> saveMember(@RequestBody MemberSaveRequestDto memberSaveRequestDto) {
         memberService.memberSave(memberSaveRequestDto);
         return ApiResTemplate.successWithNoContent(SuccessCode.MEMBER_SAVE_SUCCESS);
     }
@@ -43,7 +43,7 @@ public class MemberController {
 
     //회원 id를 통한 사용자 수정
     @PatchMapping("/{memberId}")
-    public ResponseEntity<String> memberDelete(
+    public ResponseEntity<String> updateMember(
             @PathVariable("memberId") Long memberId,
             @RequestBody MemberUpdateRequestDto memberUpdateRequestDto) {
         memberService.memberUpdate(memberId, memberUpdateRequestDto);
@@ -52,7 +52,7 @@ public class MemberController {
 
     //회원 id를 통한 사용자 삭제
     @DeleteMapping("/{memberId}")
-    public ResponseEntity<String> memberDelete(
+    public ResponseEntity<String> deleteMember(
             @PathVariable("memberId") Long memberId) {
         memberService.memberDelete(memberId);
         return new ResponseEntity<>("사용자 삭제", HttpStatus.OK);
