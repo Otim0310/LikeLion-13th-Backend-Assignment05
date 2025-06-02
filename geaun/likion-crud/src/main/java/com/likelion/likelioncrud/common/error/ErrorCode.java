@@ -15,7 +15,7 @@ public enum ErrorCode {
 
     VALIDATION_EXCEPTION(HttpStatus.BAD_REQUEST, "유효성 검사를 실패하였습니다.", "BAD_REQUEST_4004"),
 
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류가 발생했스빈다.", "INTERNAL_SERVER_ERROR");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류가 발생했습니다.", "INTERNAL_SERVER_ERROR");
 
     private final HttpStatus httpStatus;
     private final String message;
