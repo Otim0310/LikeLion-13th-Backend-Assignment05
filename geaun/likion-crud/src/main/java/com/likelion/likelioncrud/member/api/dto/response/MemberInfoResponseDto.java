@@ -12,7 +12,7 @@ public record MemberInfoResponseDto(
         Part part
 ) {
     public  static MemberInfoResponseDto from(Member member) {
-        return com.likelion.likelioncrud.member.api.dto.response.MemberInfoResponseDto.builder()
+        return MemberInfoResponseDto.builder()
                 .name(member.getName())
                 .age(member.getAge())
                 .part(member.getPart())
