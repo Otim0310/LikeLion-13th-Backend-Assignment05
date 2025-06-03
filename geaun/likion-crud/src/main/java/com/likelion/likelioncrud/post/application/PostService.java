@@ -37,9 +37,9 @@ public class PostService {
                 .member(member)
                 .build();
 
-        for (Long tagId : postSaveRequestDto.tags()) {
-            Tag tag = tagRepository.findById(tagId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND_EXCEPTION, "Tag not found: " + tagId));
+        for (String tagName : postSaveRequestDto.tagNames()) {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(new Tag(tagName)));
 
             post.getPostTags().add(new PostTag(post, tag));
         }
@@ -71,9 +71,9 @@ public class PostService {
 
         post.getPostTags().clear();
 
-        for (Long tagId : postUpdateRequestDto.tags()) {
-            Tag tag = tagRepository.findById(tagId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND_EXCEPTION, "Tag not found: " + tagId));
+        for (String tagName : postUpdateRequestDto.tagNames()) {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(new Tag(tagName)));
 
             post.getPostTags().add(new PostTag(post, tag));
         }
@@ -86,12 +86,14 @@ public class PostService {
     }
 
     private Member getMember(PostSaveRequestDto postSaveRequestDto) {
-        return memberRepository.findById(postSaveRequestDto.memberId()).orElseThrow(() -> new BusinessException(
-                ErrorCode.MEMBER_NOT_FOUND_EXCEPTION, ErrorCode.MEMBER_NOT_FOUND_EXCEPTION.getMessage() + postSaveRequestDto.memberId()));
+        return memberRepository.findById(postSaveRequestDto.memberId()).orElseThrow(() ->
+                new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION,
+                        ErrorCode.MEMBER_NOT_FOUND_EXCEPTION.getMessage() + postSaveRequestDto.memberId()));
     }
 
     private Post getPost(Long postId) {
-        return postRepository.findById(postId).orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION,
-                ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage() + postId));
+        return postRepository.findById(postId).orElseThrow(() ->
+                new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION,
+                        ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage() + postId));
     }
 }
